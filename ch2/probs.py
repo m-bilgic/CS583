@@ -8,7 +8,7 @@ class Probs(object):
     Represents a probability distribution over n binary variables
     '''
 
-    def __init__(self, n):
+    def __init__(self, n,name=None):
         '''Uniform distribution over n binary variables.'''
         s = [2 for _ in range(n)]
         self.prob_table = np.zeros(tuple(s))
