@@ -1,6 +1,7 @@
 import numpy as np
 import csv
 import itertools
+import math
 
 class Probs(object):
     '''
@@ -60,13 +61,31 @@ def marginally_independent(jp, var1, var2):
     '''Given a joint distribution jp, test if var1 is marginally independent of var2
        Return True if independent; False otherwise.
     '''
-    raise NotImplementedError('Not implemented yet.')
+    union_table = jp.marginal([var1,var2]).prob_table
+    var1_table = jp.marginal([var1]).prob_table
+    var2_table = jp.marginal([var2]).prob_table
+    for i in range(len(var1_table)):
+        for j in range(len(var2_table)):
+            u=union_table[tuple([i,j])]
+            v1= var1_table[i]
+            v2= var2_table[j]
+            if math.fabs(u-v1*v2)>1e-10:
+                return False
+    return True
 
 def conditionally_independent(jp, var1, var2, var3):
     '''Given a joint distribution jp, test if var1 is marginally independent of var2 given var3
        Return True if independent; False otherwise.
     '''
-    raise NotImplementedError('Not implemented yet.')
+    var2.extend(var3)
+    three_var_table = jp.conditional(var1,var2).prob_table #P(V1|V2,V3)
+    var_table=jp.conditional(var1,var3).prob_table #P(V1|V3)
+    for i in range(var_table.shape[0]): #var1
+        for k in range(2):#binary var2
+            for j in range(var_table.shape[1]): #var3
+                if math.fabs(three_var_table[i,k,j]-var_table[i,j])>1e-10:
+                    return False
+    return True
 
 
         
