@@ -14,18 +14,11 @@ class Probs(object):
         self.prob_table = np.zeros(tuple(s))
         self.prob_table[:] = 1./np.power(2, n)
         self.name=[]
-        nameList=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
         if name is not None:
             self.name=name #variables name
         else:
-            self.name=nameList[:n]
-    
-    def read_prob_table_from_csv_file(self, file_name):
-        with open(file_name, 'rb') as csv_file:
-            csv_reader = csv.reader(csv_file)
-            next(csv_reader) # skip header
-            for row in csv_reader:                
-                self.prob_table[tuple(row[:-1])] = row[-1]
+            self.name=['v'+str(i) for i in range(n)]
+
     
     def marginal(self, variables):
         '''Prob(variables)'''        
@@ -33,13 +26,13 @@ class Probs(object):
         n_new = len(variables)
         combs = itertools.product(range(2), repeat=n_new)
 
-        p_new = Probs(n_new,self.name[variables[0]:(variables[-1]+1)])
+        p_new = Probs(n_new,variables)
         
         for comb in combs:
             index = []
             for i in range(n_old):
-                if i in variables:
-                    index.append(comb[variables.index(i)])
+                if self.name[i] in variables:
+                    index.append(comb[variables.index(self.name[i])])
                 else:
                     index.append(slice(None))
             p_new.prob_table[comb] = np.sum(self.prob_table[tuple(index)])
@@ -65,10 +58,28 @@ class Probs(object):
                 numerator.prob_table[tuple(index)] /= denominator.prob_table[comb]
             return numerator
             
+def read_prob_table_from_csv_file(file_name):
+    """
+    Read csv file from given file name
+    """
+    with open(file_name, 'rb') as csv_file:
+        csv_reader = csv.reader(csv_file)
+        header=csv_reader.next()
+        jp=None
+        if not header[0].isdigit():         #there is a header
+            jp=Probs(len(header)-1,header[:-1])
+        else:
+            jp=Probs(len(header)-1,None)
+            csv_file.seek(0)    #back to begin of the file
+        for row in csv_reader:
+            jp.prob_table[tuple(row[:-1])] = row[-1]
+    return jp
+
 
 def marginally_independent(jp, var1, var2):
     '''Given a joint distribution jp, test if var1 is marginally independent of var2
        Return True if independent; False otherwise.
+       var1 and var2 both should be single variable
     '''
     union_table = jp.marginal((var1+var2)).prob_table
     var1_table = jp.marginal(var1).prob_table
@@ -85,7 +96,9 @@ def marginally_independent(jp, var1, var2):
 def conditionally_independent(jp, var1, var2, var3):
     '''Given a joint distribution jp, test if var1 is marginally independent of var2 given var3
        Return True if independent; False otherwise.
-       P(V1|V2,V3)=P(V1|V3) <-->V1 is independent of V2 given V3
+       P(V1|V2,V3)=P(V1|V3) <=>V1 is independent of V2 given V3
+       var1 and var2 should be single variable
+       var3 could be multi variables
     '''
     assert len(var2)==1
     totLen=len(var1)+len(var2)+len(var3)
@@ -95,12 +108,15 @@ def conditionally_independent(jp, var1, var2, var3):
     combs=itertools.product(range(2),repeat=totLen)
     for comb in combs:
         c=list(comb)
-        c.pop(1)#var2 is not included; 0000->0?00 0001->0?01; ? could be 0 or 1
+        c.pop(1)#var2 is not included; 0000->0X00 0001->0X01; X could be 0 or 1
         if math.fabs(total_var_table[tuple(comb)]-var_table[tuple(c)])>1e-10:
             return False
     return True
 
 def print_conditionally_independent(jp, var1, var2, var3):
+    """
+    show the result of given parameters' conditionally independent
+    """
     var3_name=""
     for v in var3:
         var3_name+= str(jp.name[v])
@@ -111,19 +127,59 @@ def print_conditionally_independent(jp, var1, var2, var3):
     print(str(jp.name[var1[0]])+" is independent with "+ str(jp.name[var2[0]])+" given "+var3_name)
     return True
 
+def print_conditionally_independent_multi_vars(jp,var1,var2,var3):
+    """
+    show the result of given parameters' conditionally independent
+    """
+    var2_name=""
+    for v in var2:
+        var2_name+= str(jp.name[v])
+        var2_name+=" "
+    var3_name=""
+    for v in var3:
+        var3_name+= str(jp.name[v])
+        var3_name+=" "
+    if not conditionally_independent_multi_vars(jp,var1,var2,var3):
+        print(str(jp.name[var1[0]])+" is not independent with "+ var2_name+"given "+var3_name)
+        return False
+    print(str(jp.name[var1[0]])+" is independent with "+ var2_name+"given "+var3_name)
+    return True
+
+def conditionally_independent_multi_vars(jp,var1,var2,var3):
+    """
+    Given a joint distribution jp, test if var1 is marginally independent of var2 given var3
+    Return True if independent; False otherwise.
+    var1 should be single variable
+    var2 and var3 could be multi variables
+    """
+    for v2 in var2:
+        if not conditionally_independent(jp,var1,[v2],var3):
+            return False
+    return True
+
+def marginally_independent_multi_vars(jp,var1,var2):
+    """
+    Given a joint distribution jp, test if var1 is marginally independent of var2
+    Return True if independent; False otherwise.
+    var1 should be single variable
+    var2 could be multi variables
+    """
+    for v2 in var2:
+        if not marginally_independent(jp,var1,[v2]):
+            return False
+    return True
 
 if __name__ == '__main__':
-    
+
     file_name = 'hw1.csv'
-    jp = Probs(n=4)
-    jp.read_prob_table_from_csv_file(file_name)
+    jp = read_prob_table_from_csv_file(file_name)
 
     print "MARGINALS\n"
 
     for i in range(4):
-        print "P(%d)\n%s\n" %(i, jp.marginal([i]).prob_table)
+        print "P(%s)\n\tF\tT\n%s\n" %(jp.name[i], jp.marginal(jp.name[i]).prob_table)
 
     print "\nCONDITIONALS\n"
     for i in range(4):
         for j in range(i+1, 4):
-            print "P(%d|%d)\n%s\n" %(i, j, jp.conditional([i], [j]).prob_table)
+            print "P(%s|%s)\n%s\n" %(jp.name[i], jp.name[j], jp.conditional(jp.name[i], jp.name[j]).prob_table)
