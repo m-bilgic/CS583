@@ -18,6 +18,7 @@ class Edge(object):
 
 class Graph(object):
     def __init__(self,content_path):
+        self.nodes_list=[]
         self.nodes_dict=self.get_nodes(content_path)
 
     # def add_node(self,n):
@@ -38,7 +39,7 @@ class Graph(object):
                     break
                 line_info=line.split('\n')[0].split('\t')
                 nodes_dict[line_info[0]]=Node(line_info[0],line_info[1:-1],line_info[-1])
-                # self.nodes_list.append(Node(line_info[0],line_info[1:-1],line_info[-1]))
+                self.nodes_list.append(line_info[0])
             node_file.close()
         return nodes_dict
 
@@ -117,10 +118,13 @@ class Direct_Graph(Graph):
                 incomes[edge.edge[1]].append(self.nodes_dict[edge.edge[0]])
         return incomes
 
+# def local_classifier(graph):
 
+# class Classifier583(object):
+#     def
 content_path="G:/IIT/CS583 TA/project/cora/cora.content"
 cites_path="G:/IIT/CS583 TA/project/cora/cora.cites"
 a=Direct_Graph(content_path,cites_path)
 
 # a.read_nodes("G:/IIT/CS583 TA/project/cora/cora.content")
-print(a.outcomes)
+print(a.nodes_list)
