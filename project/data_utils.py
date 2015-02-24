@@ -1,6 +1,6 @@
 from graph import *
 
-def __load_linqs_graph(data_path):
+def _load_linqs_graph(data_path):
     '''
     Create a DirectedGraph object and add Nodes and Edges
     '''
@@ -32,13 +32,13 @@ def load_cora(data_path):
     '''
     Load cora data set
     '''
-    return __load_linqs_graph(data_path)
+    return _load_linqs_graph(data_path)
 
 def load_citeseer(data_path):
     '''
     Load citeseer data set
     '''
-    return __load_linqs_graph(data_path)
+    return _load_linqs_graph(data_path)
 
 # def load_cora(data_path):
 #     '''
@@ -101,4 +101,5 @@ def load_citeseer(data_path):
 # content_path="G:/IIT/CS583 TA/project/citeseer/citeseer.content"
 # cites_path="G:/IIT/CS583 TA/project/citeseer/citeseer.cites"
 # citeseer=load_citeseer([content_path,cites_path])
+
 # print
