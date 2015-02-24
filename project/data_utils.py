@@ -1,10 +1,10 @@
 from graph import *
 
-def load_direct_graph(data_path):
+def __load_linqs_graph(data_path):
     '''
     Create a DirectedGraph object and add Nodes and Edges
     '''
-    direct_graph=DirectedGraph()
+    linqs_graph=DirectedGraph()
     for path in data_path:
         if path.split('.')[-1]=='content':  #.content file
             node_file=open(path,'r')
@@ -13,7 +13,7 @@ def load_direct_graph(data_path):
                 if not line:
                     break
                 line_info=line.split('\n')[0].split('\t')
-                direct_graph.add_node(Node(line_info[0],line_info[1:-1],line_info[-1]))# id, feature vector, label
+                linqs_graph.add_node(Node(line_info[0],line_info[1:-1],line_info[-1]))# id, feature vector, label
             node_file.close()
 
         elif path.split('.')[-1]=='cites':#.cites file
@@ -23,10 +23,22 @@ def load_direct_graph(data_path):
                 if not line:
                     break
                 line_info=line.split('\n')[0].split('\t')
-                direct_graph.add_edge(Edge(line_info[0],line_info[1]))# cited -> citing
+                linqs_graph.add_edge(Edge(line_info[0],line_info[1]))# cited -> citing
                                                                     # the more out neighbors the more important
             edge_file.close()
-    return direct_graph
+    return linqs_graph
+
+def load_cora(data_path):
+    '''
+    Load cora data set
+    '''
+    return __load_linqs_graph(data_path)
+
+def load_citeseer(data_path):
+    '''
+    Load citeseer data set
+    '''
+    return __load_linqs_graph(data_path)
 
 # def load_cora(data_path):
 #     '''
@@ -88,7 +100,5 @@ def load_direct_graph(data_path):
 
 # content_path="G:/IIT/CS583 TA/project/citeseer/citeseer.content"
 # cites_path="G:/IIT/CS583 TA/project/citeseer/citeseer.cites"
-#
-# citeseer=load_direct_graph([content_path,cites_path])
-#
+# citeseer=load_citeseer([content_path,cites_path])
 # print
