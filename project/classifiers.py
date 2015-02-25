@@ -1,4 +1,5 @@
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
 
 def abstract():
     import inspect
@@ -42,7 +43,8 @@ class LocalClassifier(Classifier):
 
     def __init__(self,scikit_classifier_name):
         super(LocalClassifier,self).__init__(scikit_classifier_name)
-        self.classifier=DecisionTreeClassifier()
+        # self.classifier=DecisionTreeClassifier()
+        self.classifier=LogisticRegression()
 
     def fit(self, graph, train_indices):
         '''
