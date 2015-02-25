@@ -1,3 +1,5 @@
+from sklearn.tree import DecisionTreeClassifier
+
 def abstract():
     import inspect
     caller = inspect.getouterframes(inspect.currentframe())[1][3]
@@ -29,7 +31,7 @@ class Classifier(object):
         '''
         abstract()
     
-    def predict(self, graph, train_indices, test_indices):
+    def predict(self, graph, test_indices):
         '''
         This function should be called only after the fit function is called.
         Predict the labels of test Nodes assuming the labels of the train Nodes are observed.
@@ -37,20 +39,30 @@ class Classifier(object):
         abstract()
 
 class LocalClassifier(Classifier):
-    
+
+    def __init__(self,scikit_classifier_name):
+        super(LocalClassifier,self).__init__(scikit_classifier_name)
+        self.classifier=DecisionTreeClassifier()
+
     def fit(self, graph, train_indices):
         '''
         Create a scikit-learn classifier and fit it to the Node attributes
         ''' 
-        abstract()
-    
-    def predict(self, graph, train_indices, test_indices):
+        # abstract()
+        X=[graph.node_list[t].feature_vector for t in train_indices]
+        y=[graph.node_list[t].label for t in train_indices]
+        self.classifier.fit(X,y)
+
+
+    def predict(self, graph, test_indices):
         '''
         This function should be called only after the fit function is called.
         Predict the labels of test Nodes assuming the labels of the train Nodes are observed.
         Use only the node attributes for prediction.
         '''
-        abstract()
+        # abstract()
+        X=[graph.node_list[t].feature_vector for t in test_indices]
+        return self.classifier.predict(X)
 
 class RelationalClassifier(Classifier):
     
@@ -65,7 +77,7 @@ class RelationalClassifier(Classifier):
         ''' 
         abstract()
     
-    def predict(self, graph, train_indices, test_indices):
+    def predict(self, graph, test_indices):
         '''
         This function should be called only after the fit function is called.
         Predict the labels of test Nodes assuming the labels of the train Nodes are observed.

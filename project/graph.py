@@ -46,7 +46,8 @@ class DirectedGraph(Graph):
         super(DirectedGraph, self).__init__()
         self.out_neighbors = defaultdict(set)
         self.in_neighbors = defaultdict(set)
-    
+        self.str_class=[]
+
     def add_edge(self, e):
         self.edge_list.append(e)
         self.out_neighbors[e.from_node].add(e.to_node)
@@ -60,6 +61,11 @@ class DirectedGraph(Graph):
     
     def get_neighbors(self, n):
         return self.out_neighbors[n].union(self.in_neighbors[n])
+
+    def map_class_str_to_int(self,s):
+        if s not in self.str_class:
+            self.str_class.append(s)
+        return self.str_class.index(s)
 
 class UndirectedGraph(Graph):
     

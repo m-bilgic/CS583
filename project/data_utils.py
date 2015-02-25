@@ -1,4 +1,5 @@
 from graph import DirectedGraph, Node, Edge
+import csv
 
 def _load_linqs_graph(data_path):
     '''
@@ -7,13 +8,19 @@ def _load_linqs_graph(data_path):
     linqs_graph=DirectedGraph()
     for path in data_path:
         if path.split('.')[-1]=='content':  #.content file
+            # with open(path, 'rb') as csv_file:
+            #     csv_reader = csv.reader(csv_file)
+            #     for row in csv_reader:
+            #         linqs_graph.add_node(Node(row[0],row[1:-1],row[-1]))
+
             node_file=open(path,'r')
             while True:
                 line=node_file.readline()    #read line
                 if not line:
                     break
                 line_info=line.split('\n')[0].split('\t')
-                linqs_graph.add_node(Node(line_info[0],line_info[1:-1],line_info[-1]))# id, feature vector, label
+                cl=linqs_graph.map_class_str_to_int(line_info[-1])
+                linqs_graph.add_node(Node(float(line_info[0]),map(float,line_info[1:-1]),cl))# id, feature vector, label
             node_file.close()
 
         elif path.split('.')[-1]=='cites':#.cites file

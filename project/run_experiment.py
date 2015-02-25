@@ -9,7 +9,10 @@ from sklearn.metrics import accuracy_score
 import numpy as np
 
 if __name__ == '__main__':
-    path = ""
+
+    content_path="G:/IIT/CS583 TA/project/cora/cora.content"
+    cites_path="G:/IIT/CS583 TA/project/cora/cora.cites"
+    path = [content_path,cites_path]
     graph = load_cora(path)
     
     kf = KFold(n=len(graph.node_list), n_folds=10, shuffle=True, random_state=42)
@@ -21,9 +24,10 @@ if __name__ == '__main__':
     for train, test in kf:
         clf = LocalClassifier(classifier_name)
         clf.fit(graph, train)
-        y_pred = clf.predict(graph, train)
-        y_true = None # TODO Need the true labels of the test nodes
+        y_pred = clf.predict(graph, test)
+        y_true = [graph.node_list[t].label for t in test]
         accuracies.append(accuracy_score(y_true, y_pred))
+
     
     print accuracies
     print "Mean accuracy: %0.4f +- %0.4f" % (np.mean(accuracies), np.std(accuracies))
