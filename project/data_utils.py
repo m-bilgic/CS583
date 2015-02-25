@@ -1,4 +1,4 @@
-from graph import *
+from graph import DirectedGraph, Node, Edge
 
 def _load_linqs_graph(data_path):
     '''
