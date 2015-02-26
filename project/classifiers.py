@@ -1,5 +1,13 @@
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.linear_model import LogisticRegression
+# from sklearn.tree import DecisionTreeClassifier
+# from sklearn.linear_model import LogisticRegression
+
+def get_class( kls ):
+    parts = kls.split('.')
+    module = ".".join(parts[:-1])
+    m = __import__( module )
+    for comp in parts[1:]:
+        m = getattr(m, comp)
+    return m
 
 def abstract():
     import inspect
@@ -23,7 +31,7 @@ class Classifier(object):
 
     def __init__(self, scikit_classifier_name):
         self.scikit_classifier_name = scikit_classifier_name
-    
+
     
     def fit(self, graph, train_indices):
         '''
@@ -43,8 +51,8 @@ class LocalClassifier(Classifier):
 
     def __init__(self,scikit_classifier_name):
         super(LocalClassifier,self).__init__(scikit_classifier_name)
-        # self.classifier=DecisionTreeClassifier()
-        self.classifier=LogisticRegression()
+        classifer_class=get_class(scikit_classifier_name)
+        self.classifier=classifer_class()
 
     def fit(self, graph, train_indices):
         '''
