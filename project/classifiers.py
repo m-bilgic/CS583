@@ -23,6 +23,11 @@ class Aggregator(object):
         # TODO: We need to keep track of predicted labels somewhere or pass them to this function
         # We can create a predicted label variable in the Node class and set it everytime we predict something for it
         abstract()
+        # for tr in train_indices:
+        #     node=graph.node_list[tr]
+        #     if self.directed:
+        #         out_neighbors=graph.get_out
+
 
 class Classifier(object):
     '''
@@ -40,7 +45,7 @@ class Classifier(object):
         '''
         abstract()
     
-    def predict(self, graph, test_indices):
+    def predict(self, graph,observed_indices, test_indices):
         '''
         This function should be called only after the fit function is called.
         Predict the labels of test Nodes assuming the labels of the train Nodes are observed.
@@ -64,7 +69,7 @@ class LocalClassifier(Classifier):
         self.classifier.fit(X,y)
 
 
-    def predict(self, graph, test_indices):
+    def predict(self, graph,observed_indices, test_indices):
         '''
         This function should be called only after the fit function is called.
         Predict the labels of test Nodes assuming the labels of the train Nodes are observed.
@@ -87,7 +92,7 @@ class RelationalClassifier(Classifier):
         ''' 
         abstract()
     
-    def predict(self, graph, test_indices):
+    def predict(self, graph,observed_indices, test_indices):
         '''
         This function should be called only after the fit function is called.
         Predict the labels of test Nodes assuming the labels of the train Nodes are observed.
@@ -107,7 +112,7 @@ class ICA(Classifier):
         self.local_classifier.fit(graph, train_indices)
         self.relational_classifier.fit(graph, train_indices)
     
-    def predict(self, graph, train_indices, test_indices):
+    def predict(self, graph, observed_indices, test_indices):
         '''
         This function should be called only after the fit function is called.
         Iteratively, predict the labels of all Nodes that are in the graph but not in train indices.
