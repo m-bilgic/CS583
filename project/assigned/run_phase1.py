@@ -31,7 +31,7 @@ if __name__ == '__main__':
     for train, test in kf:
         clf = LocalClassifier(args.classifier)
         clf.fit(graph, train)
-        y_pred = clf.predict(graph,train, test)
+        y_pred = clf.predict(graph, test)
         y_true = [graph.node_list[t].label for t in test]
         accuracies.append(accuracy_score(y_true, y_pred))
         if cm is None:
