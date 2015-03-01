@@ -1,8 +1,8 @@
-from data_utils import load_cora
+from project.assigned.data_utils import load_cora
 
 from sklearn.cross_validation import KFold
 
-from classifiers import LocalClassifier
+from project.assigned.classifiers import LocalClassifier
 
 from sklearn.metrics import accuracy_score
 

@@ -1,4 +1,4 @@
-from graph import DirectedGraph, Node, Edge
+from project.assigned.graph import DirectedGraph, Node, Edge
 import csv
 
 def _load_linqs_graph(data_path):
