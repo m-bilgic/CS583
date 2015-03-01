@@ -31,7 +31,6 @@ class Node(object):
         self.node_id = node_id
         self.feature_vector = feature_vector
         self.label = label
-        self.predicted_label=-1
 
 
 class Edge(object):
