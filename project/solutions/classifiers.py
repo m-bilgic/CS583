@@ -1,5 +1,40 @@
-# from sklearn.tree import DecisionTreeClassifier
-# from sklearn.linear_model import LogisticRegression
+def abstract():
+    import inspect
+    caller = inspect.getouterframes(inspect.currentframe())[1][3]
+    raise NotImplementedError(caller + ' must be implemented in subclass')
+
+class Aggregator(object):
+    
+    def __init__(self, domain_labels, directed = False):
+        self.domain_labels = domain_labels # The list of labels in the domain
+        self.directed = directed # Whether we should use edge directions for creating the aggregation
+    
+    def aggregate(self, graph, node, conditional_node_to_label_map):
+        ''' Given a node, its graph, and labels to condition on (observed and/or predicted)
+        create and return a feature vector for neighbors of this node.
+        If a neighbor is not in conditional_node_to_label_map, ignore it.
+        If directed = True, create and append two feature vectors;
+        one for the out-neighbors and one for the in-neighbors.
+        '''
+        abstract()
+
+class CountAggregator(Aggregator):
+    '''The count aggregate'''
+    
+    def aggregate(self, graph, node, conditional_node_to_label_map): 
+        raise NotImplementedError('You need to implement this method')
+
+class ProportionalAggregator(Aggregator):
+    '''The proportional aggregate'''
+    
+    def aggregate(self, graph, node, conditional_node_to_label_map): 
+        raise NotImplementedError('You need to implement this method')
+
+class ExistAggregator(Aggregator):
+    '''The exist aggregate'''
+    
+    def aggregate(self, graph, node, conditional_node_to_label_map): 
+        raise NotImplementedError('You need to implement this method')
 
 def get_class( kls ):
     parts = kls.split('.')
@@ -9,33 +44,14 @@ def get_class( kls ):
         m = getattr(m, comp)
     return m
 
-def abstract():
-    import inspect
-    caller = inspect.getouterframes(inspect.currentframe())[1][3]
-    raise NotImplementedError(caller + ' must be implemented in subclass')
-
-class Aggregator(object):
-    
-    def __init__(self, directed = False):
-        self.directed = directed
-    
-    def aggregate(self, graph, node, train_indices): 
-        # TODO: We need to keep track of predicted labels somewhere or pass them to this function
-        # We can create a predicted label variable in the Node class and set it everytime we predict something for it
-        abstract()
-        # for tr in train_indices:
-        #     node=graph.node_list[tr]
-        #     if self.directed:
-        #         out_neighbors=graph.get_out
-
-
 class Classifier(object):
     '''
     The base classifier object
     '''
 
-    def __init__(self, scikit_classifier_name):
-        self.scikit_classifier_name = scikit_classifier_name
+    def __init__(self, scikit_classifier_name, **classifier_args):        
+        classifer_class=get_class(scikit_classifier_name)
+        self.clf = classifer_class(classifier_args)
 
     
     def fit(self, graph, train_indices):
@@ -45,60 +61,59 @@ class Classifier(object):
         '''
         abstract()
     
-    def predict(self, graph,observed_indices, test_indices):
+    def predict(self, graph, test_indices, conditional_node_to_label_map = None):
         '''
         This function should be called only after the fit function is called.
-        Predict the labels of test Nodes assuming the labels of the train Nodes are observed.
+        Predict the labels of test Nodes conditioning on the labels in conditional_node_to_label_map.
         '''
         abstract()
 
 class LocalClassifier(Classifier):
 
-    def __init__(self,scikit_classifier_name):
-        super(LocalClassifier,self).__init__(scikit_classifier_name)
-        classifer_class=get_class(scikit_classifier_name)
-        self.classifier=classifer_class()
-
     def fit(self, graph, train_indices):
         '''
-        Create a scikit-learn classifier and fit it to the Node attributes
+        Create a feature list of lists (or matrix) and a label list
+        (or array) and then fit using self.clf
         ''' 
-        # abstract()
         X=[graph.node_list[t].feature_vector for t in train_indices]
         y=[graph.node_list[t].label for t in train_indices]
-        self.classifier.fit(X,y)
+        self.clf.fit(X,y)
 
-
-    def predict(self, graph,observed_indices, test_indices):
+    def predict(self, graph, test_indices, conditional_node_to_label_map = None):
         '''
         This function should be called only after the fit function is called.
-        Predict the labels of test Nodes assuming the labels of the train Nodes are observed.
         Use only the node attributes for prediction.
         '''
-        # abstract()
         X=[graph.node_list[t].feature_vector for t in test_indices]
-        return self.classifier.predict(X)
+        return self.clf.predict(X)
 
 class RelationalClassifier(Classifier):
     
-    def __init__(self, scikit_classifier_name, aggregator, use_node_attributes = False):
-        super(RelationalClassifier, self).__init__(scikit_classifier_name)
+    def __init__(self, scikit_classifier_name, aggregator, use_node_attributes = False, **classifier_args):
+        super(RelationalClassifier, self).__init__(scikit_classifier_name, **classifier_args)
         self.aggregator = aggregator
         self.use_node_attributes = use_node_attributes
     
     def fit(self, graph, train_indices):
         '''
-        Create a scikit-learn classifier and fit it to relational (+ potentially node) attributes
+        Create a feature list of lists (or matrix) and a label list
+        (or array) and then fit using self.clf
+        You need to use aggregator to create relational features.
+        Note that the aggregator needs to know what to condition on, 
+        i.e., conditional_node_to_label_map. This should be created using only the train nodes.
+        The features list might or might not include the node features, depending on 
+        the value of use_node_attributes.
         ''' 
-        abstract()
+        raise NotImplementedError('You need to implement this method')
     
-    def predict(self, graph,observed_indices, test_indices):
+    def predict(self, graph, test_indices, conditional_node_to_label_map = None):
         '''
         This function should be called only after the fit function is called.
-        Predict the labels of test Nodes assuming the labels of the train Nodes are observed.
-        Use relational (+ potentially node) attributes for prediction.
+        Predict the labels of test Nodes conditioning on the labels in conditional_node_to_label_map.
+        conditional_node_to_label_map might include the observed and predicted labels.        
+        This method is NOT iterative; it does NOT update conditional_node_to_label_map.
         '''
-        abstract()
+        raise NotImplementedError('You need to implement this method')
 
 class ICA(Classifier):
     
@@ -112,10 +127,10 @@ class ICA(Classifier):
         self.local_classifier.fit(graph, train_indices)
         self.relational_classifier.fit(graph, train_indices)
     
-    def predict(self, graph, observed_indices, test_indices):
+    def predict(self, graph, test_indices, conditional_node_to_label_map = None):
         '''
         This function should be called only after the fit function is called.
-        Iteratively, predict the labels of all Nodes that are in the graph but not in train indices.
+        Implement ICA using the local classifier and the relational classifier.
         '''
-        abstract()
+        raise NotImplementedError('You need to implement this method')
     
