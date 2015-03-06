@@ -21,7 +21,7 @@ def load_linqs_data(content_file, cites_file):
                 domain_labels.append(line_info[-1])
         node_file.close()
 
-    elif cites_file.split('.')[-1]=='cites':#.cites file
+    if cites_file.split('.')[-1]=='cites':#.cites file
         edge_file=open(cites_file,'r')
         while True:
             line=edge_file.readline()   #read line
