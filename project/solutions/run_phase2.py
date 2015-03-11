@@ -6,6 +6,7 @@ from classifiers import CountAggregator
 from sklearn.metrics import accuracy_score, confusion_matrix
 from sklearn.cross_validation import train_test_split
 import numpy as np
+import matplotlib.pyplot as plt
 
 import argparse
 
@@ -25,18 +26,64 @@ if __name__ == '__main__':
     graph, domain_labels = load_linqs_data(args.content_file, args.cites_file)
     
     budget=[0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9]
-    
+
+    n=range(len(graph.node_list))
+
+    local_accuracies={}
+    relational_accuracies={}
+
+
     for t in range(args.num_trials):
         for b in budget:
-            train, test ... = train_test_split(..., train_size=b, random_state=t)
+            train, test = train_test_split(n, train_size=b, random_state=t)
             # local classifier fit and test
-            local_accuracies[b].append(accuracy)
+            local_clf=LocalClassifier(args.classifier)
+            agg=CountAggregator(domain_labels,directed=True)
+            relational_clf=RelationalClassifier(args.classifier,agg,use_node_attributes=True)
+            local_clf.fit(graph,train)
+            local_y_pred=local_clf.predict(graph,test)
+            y_true=[graph.node_list[t].label for t in test]
+            local_accuracy=accuracy_score(y_true, local_y_pred)
+            if b not in local_accuracies.keys():
+                local_accuracies[b]=[]
+            local_accuracies[b].append(local_accuracy)
             # relational classifier fit and test
-            relational_accuracies[b].append(accuracy)
+            relational_clf.fit(graph,train)
+            relational_y_pred=relational_clf.predict(graph,test)
+            relational_accuracy=accuracy_score(y_true,relational_y_pred)
+            if b not in relational_accuracies.keys():
+                relational_accuracies[b]=[]
+            relational_accuracies[b].append(relational_accuracy)
+
     
     #compute the mean
+    local_mean=[]
+    relation_mean=[]
     for b in budget:
-        local_mean = np.mean(local_accuracies[b])
+        local_mean.append(np.mean(local_accuracies[b]))
+        # print 'local=',local_mean
+        relation_mean.append(np.mean(relational_accuracies[b]))
+        # print 'relation=',relation_mean
+
+    n_groups=len(budget)
+    fig=plt.plot()
+    index=np.arange(n_groups)
+    bar_width=0.35
+
+    opacity = 0.4
+    rects1 = plt.bar(index, local_mean, bar_width,alpha=opacity, color='b',label='local_mean')
+    rects2 = plt.bar(index + bar_width, relation_mean, bar_width,alpha=opacity,color='r',label='relation_mean')
+
+    plt.xlabel('Budget')
+    plt.ylabel('Accuracy')
+    plt.title('Accuracy by Budget and different classifiers')
+    plt.xticks(index + bar_width, tuple(budget))
+    plt.ylim(0,1)
+    plt.legend(loc=2)
+
+    plt.tight_layout()
+    plt.show()
+
     
         
     

@@ -29,16 +29,21 @@ class CountAggregator(Aggregator):
         if self.directed:
             in_neighbors_count=len(self.domain_labels)*e
             out_neighbors_count=len(self.domain_labels)*e
-            for out_n in graph.out_neighbors[node.node_id]:
+            for out_n in graph.get_out_neighbors(node.node_id):
                 if out_n in conditional_node_to_label_map.keys():
-                    a=conditional_node_to_label_map[out_n]
-                    b=self.domain_labels.index(a)
-                    out_neighbors_count[b]+=1.0
-                    # out_neighbors_count[self.domain_labels.index(conditional_node_to_label_map[out_n])]+=1.0
-            for in_n in graph.in_neighbors[node.node_id]:
+                    out_neighbors_count[self.domain_labels.index(conditional_node_to_label_map[out_n])]+=1.0
+            for in_n in graph.get_in_neighbors(node.node_id):
                 if in_n in conditional_node_to_label_map.keys():
                     in_neighbors_count[self.domain_labels.index(conditional_node_to_label_map[in_n])]+=1.0
-        return in_neighbors_count+out_neighbors_count
+            return in_neighbors_count+out_neighbors_count
+        else:
+            neighbors_count=len(self.domain_labels)*e
+            for n in graph.get_neighbors(node.node_id):
+                if n in conditional_node_to_label_map.keys():
+                    neighbors_count[self.domain_labels.index(conditional_node_to_label_map[n])]+=1.0
+            return neighbors_count
+
+
 
 class ProportionalAggregator(Aggregator):
     '''The proportional aggregate'''
@@ -115,6 +120,16 @@ class RelationalClassifier(Classifier):
         for i in train_indices:
             self.conditional_map[graph.node_list[i].node_id]=graph.node_list[i].label
 
+    def _combine_feature(self,graph,X,i):
+        relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
+        record=[]
+        if self.use_node_attributes:
+            record=list(graph.node_list[i].feature_vector)
+            record.extend(relation)
+        else:
+            record.extend(relation)
+        X.append(record)
+
     def fit(self, graph, train_indices, conditional_node_to_label_map = None):
         '''
         Create a feature list of lists (or matrix) and a label list
@@ -133,14 +148,15 @@ class RelationalClassifier(Classifier):
         X=[]
         y=[]
         for i in train_indices:
-            relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
-            record=[]
-            if self.use_node_attributes:
-                record=graph.node_list[i].feature_vector
-                record.extend(relation)
-            else:
-                record.extend(relation)
-            X.append(record)
+            self._combine_feature(graph,X,i)
+            # relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
+            # record=[]
+            # if self.use_node_attributes:
+            #     record=graph.node_list[i].feature_vector
+            #     record.extend(relation)
+            # else:
+            #     record.extend(relation)
+            # X.append(record)
             y.append(graph.node_list[i].label)
         self.clf.fit(X,y)
 
@@ -154,14 +170,15 @@ class RelationalClassifier(Classifier):
         # raise NotImplementedError('You need to implement this method')
         X=[]
         for i in test_indices:
-            relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
-            record=[]
-            if self.use_node_attributes:
-                record=graph.node_list[i].feature_vector
-                record.extend(relation)
-            else:
-                record.extend(relation)
-            X.append(record)
+            self._combine_feature(graph,X,i)
+            # relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
+            # record=[]
+            # if self.use_node_attributes:
+            #     record=graph.node_list[i].feature_vector
+            #     record.extend(relation)
+            # else:
+            #     record.extend(relation)
+            # X.append(record)
         return self.clf.predict(X)
 
 class ICA(Classifier):
