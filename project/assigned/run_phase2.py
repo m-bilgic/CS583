@@ -8,6 +8,8 @@ from sklearn.cross_validation import train_test_split
 import numpy as np
 import matplotlib.pyplot as plt
 
+from collections import defaultdict
+
 import argparse
 
 if __name__ == '__main__':
@@ -29,30 +31,31 @@ if __name__ == '__main__':
 
     n=range(len(graph.node_list))
 
-    local_accuracies={}
-    relational_accuracies={}
+    local_accuracies = defaultdict([])
+    relational_accuracies = defaultdict([])
 
 
     for t in range(args.num_trials):
         for b in budget:
             train, test = train_test_split(n, train_size=b, random_state=t)
+            
+            # True labels
+            y_true=[graph.node_list[t].label for t in test]
+            
             # local classifier fit and test
             local_clf=LocalClassifier(args.classifier)
-            agg=CountAggregator(domain_labels,directed=True)
-            relational_clf=RelationalClassifier(args.classifier,agg,use_node_attributes=True)
             local_clf.fit(graph,train)
-            local_y_pred=local_clf.predict(graph,test)
-            y_true=[graph.node_list[t].label for t in test]
+            local_y_pred=local_clf.predict(graph,test)            
             local_accuracy=accuracy_score(y_true, local_y_pred)
-            if b not in local_accuracies.keys():
-                local_accuracies[b]=[]
             local_accuracies[b].append(local_accuracy)
+            
+            
             # relational classifier fit and test
+            agg=CountAggregator(domain_labels,directed=True)
+            relational_clf=RelationalClassifier(args.classifier,agg,use_node_attributes=True)            
             relational_clf.fit(graph,train)
             relational_y_pred=relational_clf.predict(graph,test)
             relational_accuracy=accuracy_score(y_true,relational_y_pred)
-            if b not in relational_accuracies.keys():
-                relational_accuracies[b]=[]
             relational_accuracies[b].append(relational_accuracy)
 
     
