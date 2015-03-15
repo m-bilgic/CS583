@@ -61,11 +61,11 @@ if __name__ == '__main__':
     
     #compute the mean
     local_mean=[]
-    relation_mean=[]
+    relational_mean=[]
     for b in budget:
         local_mean.append(np.mean(local_accuracies[b]))
         # print 'local=',local_mean
-        relation_mean.append(np.mean(relational_accuracies[b]))
+        relational_mean.append(np.mean(relational_accuracies[b]))
         # print 'relation=',relation_mean
 
     n_groups=len(budget)
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     opacity = 0.4
     rects1 = plt.bar(index, local_mean, bar_width,alpha=opacity, color='b',label='local_mean')
-    rects2 = plt.bar(index + bar_width, relation_mean, bar_width,alpha=opacity,color='r',label='relation_mean')
+    rects2 = plt.bar(index + bar_width, relational_mean, bar_width,alpha=opacity,color='r',label='relation_mean')
 
     plt.xlabel('Budget')
     plt.ylabel('Accuracy')
