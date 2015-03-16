@@ -11,16 +11,22 @@ def load_linqs_data(content_file, cites_file):
     domain_labels=[]
     
     with open(content_file, 'r') as node_file:
-        line=node_file.readline()    #read line
-        line_info=line.split('\n')[0].split('\t')
-        linqs_graph.add_node(Node(line_info[0],map(float,line_info[1:-1]),line_info[-1]))# id, feature vector, label
-        if line_info[-1] not in domain_labels:
-            domain_labels.append(line_info[-1])
+        while True:
+            line=node_file.readline()    #read line
+            if not line:
+                break
+            line_info=line.split('\n')[0].split('\t')
+            linqs_graph.add_node(Node(line_info[0],map(float,line_info[1:-1]),line_info[-1]))# id, feature vector, label
+            if line_info[-1] not in domain_labels:
+                domain_labels.append(line_info[-1])
 
-    with open(cites_file,'r') as edge_file:        
-        line=edge_file.readline()   #read line
-        line_info=line.split('\n')[0].split('\t')
-        linqs_graph.add_edge(Edge(line_info[0],line_info[1]))
+    with open(cites_file,'r') as edge_file:
+        while True:
+            line=edge_file.readline()   #read line
+            if not line:
+                break
+            line_info=line.split('\n')[0].split('\t')
+            linqs_graph.add_edge(Edge(line_info[0],line_info[1]))
         
     return linqs_graph,domain_labels
 

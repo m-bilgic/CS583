@@ -5,6 +5,15 @@ def abstract():
     caller = inspect.getouterframes(inspect.currentframe())[1][3]
     raise NotImplementedError(caller + ' must be implemented in subclass')
 
+def pick_aggregator(agg,domain_labels,directed):
+    if agg=='count':
+        aggregator=CountAggregator(domain_labels,directed)
+    if agg=='prop':
+        aggregator=ProportionalAggregator(domain_labels,directed)
+    if agg=='exist':
+        aggregator=ExistAggregator(domain_labels,directed)
+    return aggregator
+
 class Aggregator(object):
     
     def __init__(self, domain_labels, directed = False):
@@ -49,13 +58,44 @@ class ProportionalAggregator(Aggregator):
     '''The proportional aggregate'''
     
     def aggregate(self, graph, node, conditional_node_to_label_map): 
-        raise NotImplementedError('You need to implement this method')
+        # raise NotImplementedError('You need to implement this method')
+        count_agg=CountAggregator(self.domain_labels,self.directed)
+        relation=count_agg.aggregate(graph,node,conditional_node_to_label_map)
+        length=len(self.domain_labels)
+        if self.directed:
+            in_sum=sum(relation[:length])
+            out_sum=sum(relation[length:])
+            if in_sum !=0:
+                for r in range(0,length):
+                    relation[r]/=1.*in_sum
+                # relation[:length]/=1.*in_sum
+            if out_sum !=0:
+                # relation[length:]/=1.*out_sum
+                for r in range(length,-1):
+                    relation[r]/=1.*out_sum
+            return relation
+        else:
+            tot_sum=sum(relation)
+            if tot_sum !=0:
+                for r in range(len(relation)):
+                    relation[r]/=1.*tot_sum
+                # relation[:]=relation[:]/1.*tot_sum
+            return relation
 
 class ExistAggregator(Aggregator):
     '''The exist aggregate'''
     
     def aggregate(self, graph, node, conditional_node_to_label_map): 
-        raise NotImplementedError('You need to implement this method')
+        # raise NotImplementedError('You need to implement this method')
+        count_agg=CountAggregator(self.domain_labels,self.directed)
+        relation=count_agg.aggregate(graph,node,conditional_node_to_label_map)
+        # length=len(self.domain_labels)
+        # if self.directed:
+        for r in range(len(relation)):
+            if relation[r]>=1:
+                relation[r]=1
+        return relation
+
 
 def get_class( kls ):
     parts = kls.split('.')
@@ -110,10 +150,10 @@ class LocalClassifier(Classifier):
 
 class RelationalClassifier(Classifier):
     
-    def __init__(self, scikit_classifier_name, aggregator, use_node_attributes = False, **classifier_args):
+    def __init__(self, scikit_classifier_name, aggregator, dont_use_node_attributes = False, **classifier_args):
         super(RelationalClassifier, self).__init__(scikit_classifier_name, **classifier_args)
         self.aggregator = aggregator
-        self.use_node_attributes = use_node_attributes
+        self.dont_use_node_attributes = dont_use_node_attributes
         self.conditional_map={}
 
     def create_map(self,graph,train_indices):
@@ -123,7 +163,7 @@ class RelationalClassifier(Classifier):
     def _combine_feature(self,graph,X,i):
         relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
         record=[]
-        if self.use_node_attributes:
+        if not self.dont_use_node_attributes:
             record=list(graph.node_list[i].feature_vector)
             record.extend(relation)
         else:
