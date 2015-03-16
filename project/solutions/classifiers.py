@@ -143,10 +143,10 @@ class LocalClassifier(Classifier):
 
 class RelationalClassifier(Classifier):
     
-    def __init__(self, scikit_classifier_name, aggregator, dont_use_node_attributes = False, **classifier_args):
+    def __init__(self, scikit_classifier_name, aggregator, use_node_attributes = True, **classifier_args):
         super(RelationalClassifier, self).__init__(scikit_classifier_name, **classifier_args)
         self.aggregator = aggregator
-        self.dont_use_node_attributes = dont_use_node_attributes
+        self.use_node_attributes = use_node_attributes
         self.conditional_map={}
 
     def create_map(self,graph,train_indices):
@@ -156,7 +156,7 @@ class RelationalClassifier(Classifier):
     def _combine_feature(self,graph,X,i):
         relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
         record=[]
-        if not self.dont_use_node_attributes:
+        if self.use_node_attributes:
             record=list(graph.node_list[i].feature_vector)
             record.extend(relation)
         else:

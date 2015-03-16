@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('-num_trials', type=int, default=10, help='The number of trials.')
     parser.add_argument('-aggregate', choices=['count', 'prop', 'exist'], default='exist', help='The aggreagate function.')
     parser.add_argument('-directed', default=False, action='store_true', help='Use direction of the edges for aggregates.')
-    parser.add_argument('-dont_use_node_attributes',default=False,help="Dont use the node attributes in relational classify.")
+    parser.add_argument('-dont_use_node_attributes',default=False,help="Don't use the node attributes in relational classifier.")
     args = parser.parse_args()
     
     graph, domain_labels = load_linqs_data(args.content_file, args.cites_file)
@@ -62,7 +62,7 @@ if __name__ == '__main__':
             
             # relational classifier fit and test
             agg=pick_aggregator(args.aggregate,domain_labels,args.directed)
-            relational_clf=RelationalClassifier(args.classifier,agg,args.dont_use_node_attributes)
+            relational_clf=RelationalClassifier(args.classifier, agg, not args.dont_use_node_attributes)
             relational_clf.fit(graph,train)
             relational_y_pred=relational_clf.predict(graph,test)
             relational_accuracy=accuracy_score(y_true,relational_y_pred)
