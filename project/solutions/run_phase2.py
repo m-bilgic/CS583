@@ -33,6 +33,7 @@ if __name__ == '__main__':
     parser.add_argument('-aggregate', choices=['count', 'prop', 'exist'], default='exist', help='The aggreagate function.')
     parser.add_argument('-directed', default=False, action='store_true', help='Use direction of the edges for aggregates.')
     parser.add_argument('-dont_use_node_attributes',default=False,help="Don't use the node attributes in relational classifier.")
+    parser.add_argument('-dont_evaluate_local',default=False,help="Don't use the local classifier to evaluate")
     args = parser.parse_args()
     
     graph, domain_labels = load_linqs_data(args.content_file, args.cites_file)
@@ -40,8 +41,8 @@ if __name__ == '__main__':
     budget=[0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9]
 
     n=range(len(graph.node_list))
-
-    local_accuracies = defaultdict(list)
+    if not args.dont_evaluate_local:
+        local_accuracies = defaultdict(list)
     relational_accuracies = defaultdict(list)
 
 
@@ -51,13 +52,14 @@ if __name__ == '__main__':
             
             # True labels
             y_true=[graph.node_list[t].label for t in test]
-            
-            # local classifier fit and test
-            local_clf=LocalClassifier(args.classifier)
-            local_clf.fit(graph,train)
-            local_y_pred=local_clf.predict(graph,test)            
-            local_accuracy=accuracy_score(y_true, local_y_pred)
-            local_accuracies[b].append(local_accuracy)
+
+            if not args.dont_evaluate_local:
+                # local classifier fit and test
+                local_clf=LocalClassifier(args.classifier)
+                local_clf.fit(graph,train)
+                local_y_pred=local_clf.predict(graph,test)
+                local_accuracy=accuracy_score(y_true, local_y_pred)
+                local_accuracies[b].append(local_accuracy)
             
             
             # relational classifier fit and test
@@ -69,35 +71,16 @@ if __name__ == '__main__':
             relational_accuracies[b].append(relational_accuracy)
 
     
-    #compute the mean
-    # local_mean=[]
-    # relational_mean=[]
-    print "budget\tlocal accuracy\trelational accuracy"
-    for b in budget:
-        print str(b)+'\t\t'+str(np.mean(local_accuracies[b]))+'\t\t'+str(np.mean(relational_accuracies[b]))
-        # local_mean.append(np.mean(local_accuracies[b]))
-        # print 'local=',local_mean
-        # relational_mean.append(np.mean(relational_accuracies[b]))
-        # print 'relation=',relation_mean
 
-    # n_groups=len(budget)
-    # fig=plt.plot()
-    # index=np.arange(n_groups)
-    # bar_width=0.35
-    #
-    # opacity = 0.4
-    # rects1 = plt.bar(index, local_mean, bar_width,alpha=opacity, color='b',label='local_mean')
-    # rects2 = plt.bar(index + bar_width, relational_mean, bar_width,alpha=opacity,color='r',label='relation_mean')
-    #
-    # plt.xlabel('Budget')
-    # plt.ylabel('Accuracy')
-    # plt.title('Accuracy by Budget and different classifiers')
-    # plt.xticks(index + bar_width, tuple(budget))
-    # plt.ylim(0,1)
-    # plt.legend(loc=2)
-    #
-    # plt.tight_layout()
-    # plt.show()
+    if not args.dont_evaluate_local:
+        print "budget\tlocal accuracy\trelational accuracy"
+        for b in budget:
+            print str(b)+'\t\t'+str(np.mean(local_accuracies[b]))+'\t\t'+str(np.mean(relational_accuracies[b]))
+    else:
+        print "budget\trelational accuracy"
+        for b in budget:
+            print str(b)+'\t\t'+str(np.mean(relational_accuracies[b]))
+
 
     
         
