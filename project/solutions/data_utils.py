@@ -20,7 +20,7 @@ def load_linqs_data(content_file, cites_file):
     with open(cites_file,'r') as edge_file:
         for line in edge_file:
             line_info=line.split('\n')[0].split('\t')
-            linqs_graph.add_edge(Edge(line_info[0],line_info[1]))
+            linqs_graph.add_edge(Edge(line_info[1],line_info[0]))
         
     return linqs_graph,domain_labels
 
