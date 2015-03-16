@@ -2,9 +2,9 @@ from data_utils import load_linqs_data
 from classifiers import LocalClassifier
 from classifiers import RelationalClassifier
 
-from classifiers import pick_aggregator
+from classifiers import CountAggregator, ProportionalAggregator, ExistAggregator
 
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score
 from sklearn.cross_validation import train_test_split
 import numpy as np
 
@@ -12,6 +12,15 @@ import numpy as np
 from collections import defaultdict
 
 import argparse
+
+def pick_aggregator(agg,domain_labels,directed):
+    if agg=='count':
+        aggregator=CountAggregator(domain_labels,directed)
+    if agg=='prop':
+        aggregator=ProportionalAggregator(domain_labels,directed)
+    if agg=='exist':
+        aggregator=ExistAggregator(domain_labels,directed)
+    return aggregator
 
 if __name__ == '__main__':
     

@@ -5,14 +5,7 @@ def abstract():
     caller = inspect.getouterframes(inspect.currentframe())[1][3]
     raise NotImplementedError(caller + ' must be implemented in subclass')
 
-def pick_aggregator(agg,domain_labels,directed):
-    if agg=='count':
-        aggregator=CountAggregator(domain_labels,directed)
-    if agg=='prop':
-        aggregator=ProportionalAggregator(domain_labels,directed)
-    if agg=='exist':
-        aggregator=ExistAggregator(domain_labels,directed)
-    return aggregator
+
 
 class Aggregator(object):
     
