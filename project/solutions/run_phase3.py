@@ -1,7 +1,7 @@
 from data_utils import load_linqs_data
 from classifiers import LocalClassifier
 from classifiers import RelationalClassifier
-
+from classifiers import ICA
 from classifiers import CountAggregator, ProportionalAggregator, ExistAggregator
 
 from sklearn.metrics import accuracy_score
@@ -47,9 +47,7 @@ if __name__ == '__main__':
     budget=[0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9]
 
     n=range(len(graph.node_list))
-    if not args.dont_evaluate_local:
-        local_accuracies = defaultdict(list)
-    relational_accuracies = defaultdict(list)
+    ica_accuracies = defaultdict(list)
 
 
     for t in range(args.num_trials):
@@ -58,35 +56,46 @@ if __name__ == '__main__':
             
             # True labels
             y_true=[graph.node_list[t].label for t in test]
-
-            if not args.dont_evaluate_local:
-                # local classifier fit and test
-                local_clf=LocalClassifier(args.classifier)
-                local_clf.fit(graph,train)
-                local_y_pred=local_clf.predict(graph,test)
-                local_accuracy=accuracy_score(y_true, local_y_pred)
-                local_accuracies[b].append(local_accuracy)
-            
-            
-            # relational classifier fit and test
+            local_clf=LocalClassifier(args.classifier)
             agg=pick_aggregator(args.aggregate,domain_labels,args.directed)
             relational_clf=RelationalClassifier(args.classifier, agg, not args.dont_use_node_attributes)
-            relational_clf.fit(graph,train)
+            ica=ICA(local_clf,relational_clf)
+            ica.fit(graph,train)
             conditional_node_to_label_map=create_map(graph,train)
-            relational_y_pred=relational_clf.predict(graph,test,conditional_node_to_label_map)
-            relational_accuracy=accuracy_score(y_true,relational_y_pred)
-            relational_accuracies[b].append(relational_accuracy)
+            # ica_predict=ica.predict(graph,test,conditional_node_to_label_map)
+            ica_predict=ica.predict1(graph,test,conditional_node_to_label_map)
+            ica_accuracy=accuracy_score(y_true,ica_predict)
+            ica_accuracies[b].append(ica_accuracy)
+    for b in budget:
+        print str(b)+'\t\t'+str(np.mean(ica_accuracies[b]))
+            # if not args.dont_evaluate_local:
+            #     # local classifier fit and test
+
+            #     local_clf.fit(graph,train)
+            #     local_y_pred=local_clf.predict(graph,test)
+            #     local_accuracy=accuracy_score(y_true, local_y_pred)
+            #     local_accuracies[b].append(local_accuracy)
+            #
+            #
+            # # relational classifier fit and test
+            # agg=pick_aggregator(args.aggregate,domain_labels,args.directed)
+            # relational_clf=RelationalClassifier(args.classifier, agg, not args.dont_use_node_attributes)
+            # relational_clf.fit(graph,train)
+            # conditional_node_to_label_map=create_map(graph,train)
+            # relational_y_pred=relational_clf.predict(graph,test,conditional_node_to_label_map)
+            # relational_accuracy=accuracy_score(y_true,relational_y_pred)
+            # relational_accuracies[b].append(relational_accuracy)
 
     
 
-    if not args.dont_evaluate_local:
-        print "budget\tlocal accuracy\trelational accuracy"
-        for b in budget:
-            print str(b)+'\t\t'+str(np.mean(local_accuracies[b]))+'\t\t'+str(np.mean(relational_accuracies[b]))
-    else:
-        print "budget\trelational accuracy"
-        for b in budget:
-            print str(b)+'\t\t'+str(np.mean(relational_accuracies[b]))
+    # if not args.dont_evaluate_local:
+    #     print "budget\tlocal accuracy\trelational accuracy"
+    #     for b in budget:
+    #         print str(b)+'\t\t'+str(np.mean(local_accuracies[b]))+'\t\t'+str(np.mean(relational_accuracies[b]))
+    # else:
+    #     print "budget\trelational accuracy"
+    #     for b in budget:
+    #         print str(b)+'\t\t'+str(np.mean(relational_accuracies[b]))
 
 
     

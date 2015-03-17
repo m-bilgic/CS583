@@ -202,7 +202,13 @@ class ICA(Classifier):
         self.relational_classifier = relational_classifier
         self.max_iteration = 10
     
-    
+    def _update_conditional_map(self,graph,conditional_map,predict,indices):
+        for i in range(len(predict)):
+            conditional_map[graph.node_list[indices[i]]]=predict[i]
+
+    def _update_conditional_map1(self,graph,conditional_map,predict,index):
+        conditional_map[graph.node_list[index]]=predict[0]
+
     def fit(self, graph, train_indices):
         self.local_classifier.fit(graph, train_indices)
         self.relational_classifier.fit(graph, train_indices)
@@ -212,5 +218,22 @@ class ICA(Classifier):
         This function should be called only after the fit function is called.
         Implement ICA using the local classifier and the relational classifier.
         '''
-        raise NotImplementedError('You need to implement this method')
-    
+        # raise NotImplementedError('You need to implement this method')
+        loc_predict=self.local_classifier.predict(graph,test_indices)
+        self._update_conditional_map(graph,conditional_node_to_label_map,loc_predict,test_indices)
+        for _ in range(self.max_iteration):
+            rel_predict=self.relational_classifier.predict(graph,test_indices,conditional_node_to_label_map)
+            self._update_conditional_map(graph,conditional_node_to_label_map,rel_predict,test_indices)
+        return rel_predict
+
+    def predict1(self,graph,test_indices,conditional_node_to_label_map = None):
+        loc_predict=self.local_classifier.predict(graph,test_indices)
+        self._update_conditional_map(graph,conditional_node_to_label_map,loc_predict,test_indices)
+        for _ in range(self.max_iteration):
+            for t in test_indices:
+                rel_predict=self.relational_classifier.predict(graph,[t],conditional_node_to_label_map)
+                self._update_conditional_map1(graph,conditional_node_to_label_map,rel_predict,t)
+        relational_predict=[]
+        for t in test_indices:
+            relational_predict.append(conditional_node_to_label_map[graph.node_list[t]])
+        return relational_predict
