@@ -22,6 +22,12 @@ def pick_aggregator(agg,domain_labels,directed):
         aggregator=ExistAggregator(domain_labels,directed)
     return aggregator
 
+def create_map(graph,train_indices):
+    conditional_map={}
+    for i in train_indices:
+        conditional_map[graph.node_list[i]]=graph.node_list[i].label
+    return conditional_map
+
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
@@ -30,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('-cites_file', help='The path to the cites file.')    
     parser.add_argument('-classifier', default='sklearn.linear_model.LogisticRegression', help='The underlying classifier.')
     parser.add_argument('-num_trials', type=int, default=10, help='The number of trials.')
-    parser.add_argument('-aggregate', choices=['count', 'prop', 'exist'], default='exist', help='The aggreagate function.')
+    parser.add_argument('-aggregate', choices=['count', 'prop', 'exist'], default='prop', help='The aggreagate function.')
     parser.add_argument('-directed', default=False, action='store_true', help='Use direction of the edges for aggregates.')
     parser.add_argument('-dont_use_node_attributes',default=False,help="Don't use the node attributes in relational classifier.")
     parser.add_argument('-dont_evaluate_local',default=False,help="Don't use the local classifier to evaluate")
@@ -66,7 +72,8 @@ if __name__ == '__main__':
             agg=pick_aggregator(args.aggregate,domain_labels,args.directed)
             relational_clf=RelationalClassifier(args.classifier, agg, not args.dont_use_node_attributes)
             relational_clf.fit(graph,train)
-            relational_y_pred=relational_clf.predict(graph,test)
+            conditional_node_to_label_map=create_map(graph,train)
+            relational_y_pred=relational_clf.predict(graph,test,conditional_node_to_label_map)
             relational_accuracy=accuracy_score(y_true,relational_y_pred)
             relational_accuracies[b].append(relational_accuracy)
 

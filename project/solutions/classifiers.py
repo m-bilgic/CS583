@@ -31,7 +31,7 @@ class CountAggregator(Aggregator):
         if self.directed:
             in_neighbors_count=len(self.domain_labels)*e
             out_neighbors_count=len(self.domain_labels)*e
-            for out_n in graph.get_out_neighbors(node.node_id):
+            for out_n in graph.get_out_neighbors(node):
                 if out_n in conditional_node_to_label_map.keys():
                     out_neighbors_count[self.domain_labels.index(conditional_node_to_label_map[out_n])]+=1.0
             for in_n in graph.get_in_neighbors(node.node_id):
@@ -40,7 +40,7 @@ class CountAggregator(Aggregator):
             return in_neighbors_count+out_neighbors_count
         else:
             neighbors_count=len(self.domain_labels)*e
-            for n in graph.get_neighbors(node.node_id):
+            for n in graph.get_neighbors(node):
                 if n in conditional_node_to_label_map.keys():
                     neighbors_count[self.domain_labels.index(conditional_node_to_label_map[n])]+=1.0
             return neighbors_count
@@ -108,7 +108,7 @@ class Classifier(object):
         self.clf = classifer_class(**classifier_args)
 
     
-    def fit(self, graph, train_indices, conditional_node_to_label_map = None):
+    def fit(self, graph, train_indices):
         '''
         Create a scikit-learn classifier object and fit it using the Nodes of the Graph
         that are referenced in the train_indices
@@ -124,7 +124,7 @@ class Classifier(object):
 
 class LocalClassifier(Classifier):
 
-    def fit(self, graph, train_indices, conditional_node_to_label_map = None):
+    def fit(self, graph, train_indices):
         '''
         Create a feature list of lists (or matrix) and a label list
         (or array) and then fit using self.clf
@@ -147,14 +147,11 @@ class RelationalClassifier(Classifier):
         super(RelationalClassifier, self).__init__(scikit_classifier_name, **classifier_args)
         self.aggregator = aggregator
         self.use_node_attributes = use_node_attributes
-        self.conditional_map={}
+        # self.conditional_map={}
 
-    def create_map(self,graph,train_indices):
-        for i in train_indices:
-            self.conditional_map[graph.node_list[i].node_id]=graph.node_list[i].label
 
-    def _combine_feature(self,graph,X,i):
-        relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
+    def _combine_feature(self,graph,X,i,conditional_map):
+        relation=self.aggregator.aggregate(graph,graph.node_list[i],conditional_map)
         record=[]
         if self.use_node_attributes:
             record=list(graph.node_list[i].feature_vector)
@@ -163,7 +160,7 @@ class RelationalClassifier(Classifier):
             record.extend(relation)
         X.append(record)
 
-    def fit(self, graph, train_indices, conditional_node_to_label_map = None):
+    def fit(self, graph, train_indices):
         '''
         Create a feature list of lists (or matrix) and a label list
         (or array) and then fit using self.clf
@@ -174,22 +171,14 @@ class RelationalClassifier(Classifier):
         the value of use_node_attributes.
         ''' 
         # raise NotImplementedError('You need to implement this method')
-        if conditional_node_to_label_map==None:
-            self.create_map(graph,train_indices)
-        else:
-            self.conditional_map=conditional_node_to_label_map
+
+        conditional_map={}
+        for i in train_indices:
+            conditional_map[graph.node_list[i]]=graph.node_list[i].label
         X=[]
         y=[]
         for i in train_indices:
-            self._combine_feature(graph,X,i)
-            # relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
-            # record=[]
-            # if self.use_node_attributes:
-            #     record=graph.node_list[i].feature_vector
-            #     record.extend(relation)
-            # else:
-            #     record.extend(relation)
-            # X.append(record)
+            self._combine_feature(graph,X,i,conditional_map)
             y.append(graph.node_list[i].label)
         self.clf.fit(X,y)
 
@@ -203,15 +192,7 @@ class RelationalClassifier(Classifier):
         # raise NotImplementedError('You need to implement this method')
         X=[]
         for i in test_indices:
-            self._combine_feature(graph,X,i)
-            # relation=self.aggregator.aggregate(graph,graph.node_list[i],self.conditional_map)
-            # record=[]
-            # if self.use_node_attributes:
-            #     record=graph.node_list[i].feature_vector
-            #     record.extend(relation)
-            # else:
-            #     record.extend(relation)
-            # X.append(record)
+            self._combine_feature(graph,X,i,conditional_node_to_label_map)
         return self.clf.predict(X)
 
 class ICA(Classifier):
@@ -222,7 +203,7 @@ class ICA(Classifier):
         self.max_iteration = 10
     
     
-    def fit(self, graph, train_indices, conditional_node_to_label_map = None):
+    def fit(self, graph, train_indices):
         self.local_classifier.fit(graph, train_indices)
         self.relational_classifier.fit(graph, train_indices)
     
