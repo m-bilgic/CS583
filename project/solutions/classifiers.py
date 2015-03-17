@@ -206,8 +206,8 @@ class ICA(Classifier):
         for i in range(len(predict)):
             conditional_map[graph.node_list[indices[i]]]=predict[i]
 
-    def _update_conditional_map1(self,graph,conditional_map,predict,index):
-        conditional_map[graph.node_list[index]]=predict[0]
+    # def _update_conditional_map1(self,graph,conditional_map,predict,index):
+    #     conditional_map[graph.node_list[index]]=predict[0]
 
     def fit(self, graph, train_indices):
         self.local_classifier.fit(graph, train_indices)
@@ -232,7 +232,7 @@ class ICA(Classifier):
         for _ in range(self.max_iteration):
             for t in test_indices:
                 rel_predict=self.relational_classifier.predict(graph,[t],conditional_node_to_label_map)
-                self._update_conditional_map1(graph,conditional_node_to_label_map,rel_predict,t)
+                self._update_conditional_map(graph,conditional_node_to_label_map,[rel_predict],[t])
         relational_predict=[]
         for t in test_indices:
             relational_predict.append(conditional_node_to_label_map[graph.node_list[t]])
