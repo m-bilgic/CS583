@@ -34,7 +34,7 @@ class CountAggregator(Aggregator):
             for out_n in graph.get_out_neighbors(node):
                 if out_n in conditional_node_to_label_map.keys():
                     out_neighbors_count[self.domain_labels.index(conditional_node_to_label_map[out_n])]+=1.0
-            for in_n in graph.get_in_neighbors(node.node_id):
+            for in_n in graph.get_in_neighbors(node):
                 if in_n in conditional_node_to_label_map.keys():
                     in_neighbors_count[self.domain_labels.index(conditional_node_to_label_map[in_n])]+=1.0
             return in_neighbors_count+out_neighbors_count
@@ -64,7 +64,7 @@ class ProportionalAggregator(Aggregator):
                 # relation[:length]/=1.*in_sum
             if out_sum !=0:
                 # relation[length:]/=1.*out_sum
-                for r in range(length,-1):
+                for r in range(length,len(relation)):
                     relation[r]/=1.*out_sum
             return relation
         else:

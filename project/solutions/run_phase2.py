@@ -36,14 +36,14 @@ if __name__ == '__main__':
     parser.add_argument('-cites_file', help='The path to the cites file.')    
     parser.add_argument('-classifier', default='sklearn.linear_model.LogisticRegression', help='The underlying classifier.')
     parser.add_argument('-num_trials', type=int, default=10, help='The number of trials.')
-    parser.add_argument('-aggregate', choices=['count', 'prop', 'exist'], default='count', help='The aggreagate function.')
+    parser.add_argument('-aggregate', choices=['count', 'prop', 'exist'], default='exist', help='The aggreagate function.')
     parser.add_argument('-directed', default=False, action='store_true', help='Use direction of the edges for aggregates.')
-    parser.add_argument('-dont_use_node_attributes',default=False,help="Don't use the node attributes in relational classifier.")
-    parser.add_argument('-dont_evaluate_local',default=False,help="Don't use the local classifier to evaluate")
+    parser.add_argument('-dont_use_node_attributes',default=True,help="Don't use the node attributes in relational classifier.")
+    parser.add_argument('-dont_evaluate_local',default=True,help="Don't use the local classifier to evaluate")
     args = parser.parse_args()
     
     graph, domain_labels = load_linqs_data(args.content_file, args.cites_file)
-    
+
     budget=[0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9]
 
     n=range(len(graph.node_list))
@@ -84,9 +84,12 @@ if __name__ == '__main__':
         for b in budget:
             print str(b)+'\t\t'+str(np.mean(local_accuracies[b]))+'\t\t'+str(np.mean(relational_accuracies[b]))
     else:
-        print "budget\trelational accuracy"
+        print "relational accuracy"
         for b in budget:
-            print str(b)+'\t\t'+str(np.mean(relational_accuracies[b]))
+            print str(np.mean(relational_accuracies[b]))
+        # print "budget\trelational accuracy"
+        # for b in budget:
+        #     print str(b)+'\t\t'+str(np.mean(relational_accuracies[b]))
 
 
     
